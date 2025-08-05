@@ -7,45 +7,38 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 import com.develsolutions.tarefas.model.Tarefa;
+import com.develsolutions.tarefas.repository.TarefaRepository;
 
 @Service
 public class TarefaService {
-    private List<Tarefa> listaTarefas = new ArrayList<>();
-    private Long proximoId = 1L;
+    private final TarefaRepository tarefasRepository;
 
-    public void mostrarTarefas() {
-        for (Tarefa tarefa : this.listaTarefas) {
-            System.out.println(tarefa);
-        }
-    }
+    public TarefaService(TarefaRepository tarefasRepository) { this.tarefasRepository = tarefasRepository; }
 
     public List<Tarefa> listarTarefas() {
-        return this.listaTarefas;
+        return this.tarefasRepository.findAll();
     }
 
     public Tarefa criarTarefa(String titulo) {
-        Tarefa t = new Tarefa(proximoId++, titulo);
-        listaTarefas.add(t);
-        return t;
+        Tarefa t = new Tarefa(titulo);
+        return tarefasRepository.save(t);
     }
 
     public Optional<Tarefa> atualizar(Long id, String novoTitulo, boolean concluida) {
-        for (Tarefa tarefa : this.listaTarefas) {
-            if (id.equals(tarefa.getId())) {
-                tarefa.setConcluida(concluida);
-                tarefa.setTitulo(novoTitulo);
-                return Optional.of(tarefa);
-            }
+        Optional<Tarefa> tarefaOpt = tarefasRepository.findById(id);
+        if (tarefaOpt.isPresent()) {
+            Tarefa tarefa = tarefaOpt.get();
+            tarefa.setTitulo(novoTitulo);
+            tarefa.setConcluida(concluida);
+            return Optional.of(tarefasRepository.save(tarefa));
         }
         return Optional.empty();
-    }
+            }
 
     public boolean deletar(Long id) {
-        for (Tarefa tarefa : this.listaTarefas) {
-            if (id.equals(tarefa.getId())) { 
-                this.listaTarefas.remove(tarefa); 
-                return true;
-                }   
+        if (this.tarefasRepository.existsById(id)) {
+            this.tarefasRepository.deleteById(id);
+            return true;
         }
         return false;
     }
